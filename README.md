@@ -1,2 +1,11 @@
 # phylo_z_scores
 Null modelling of phylogenetic nearest taxon distances for individual taxa
+
+This repository contains the R code to identify taxa that are under homogeneous selection,i.e, taxa (e.g. Sequence Variants in a 16S rRNA gene survey) with phylogenetically closer relatives across communities than expected by chance.
+The method consists of the following steps: 
+1) For a given pair of communities and for each taxon therein that is not present in both communities, we calculate its z-score from a null distribution of log-transformed minimum phylogenetic distances to assess how different its minimum phylogenetic distance is to that expected by chance. For example, if we examine taxon x in the community pair a-b and x is present in community a and not in community b, we first find the minimum phylogenetic distance dist between x and all the taxa that are present in community b and we log-transform it. We then calculate a null distribution of minimum log-transformed phylogenetic distances between x and these taxa by randomly picking phylogenetic distances from the whole distance pool and assigning them to the taxa in the two communities, with <i>null_mean</i> and <i>null_sd</i> being the mean and standard deviation of this distribution. Finally, we calculate the z-score as:
+ 
+<i>z-score = (log(dist) – null_mean)/null_sd</i>
+
+2) We then calculate for each taxon the average z-score across all community pairs, the number of community pairs it contributed to, and its total score as the multiplication of the two. We use phylofactorization (https://github.com/reptalex/phylofactor, https://esajournals.onlinelibrary.wiley.com/doi/abs/10.1002/ecm.1353) to identify phylogenetic groups with low total scores and to extract the consensus taxonomic classification of the taxa within.
+3) We also calculate the median z-score and we classify taxa using a threshold of significance based on a median z-score less than -2. We perceive this threshold as an indication that a given taxon is consistently under the effect of homogeneous selection, because this taxon has phylogenetically nearest neighboring taxa with shorter distances than those expected by chance in at least 50% of the applicable community pairs (i.e., those community pairs where the taxon is found in exactly one of the two communities).
