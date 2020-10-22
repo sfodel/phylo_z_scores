@@ -81,7 +81,7 @@ phylo_z_scores <- function(phy, OTU, ncores, nperm, nfactors, taxonomy) {
  
   cl <- makeCluster(ncores)
   clusterEvalQ(cl,library(data.table))
-  clusterExport(cl,varlist=c('pdist','getNTDvecs','NTD_calc','ix'))
+  clusterExport(cl,varlist=c('pdist','getNTDvecs','NTD_calc','ix'), envir= environment())
   timestamp()
   print("Making initial species table")
   species_NTD_effects <- parLapply(cl,species,getNTDvecs,OTU=OTU,ix=ix)
@@ -144,7 +144,7 @@ phylo_z_scores <- function(phy, OTU, ncores, nperm, nfactors, taxonomy) {
   cl <- makeCluster(ncores)
   clusterEvalQ(cl,library(picante))
   clusterEvalQ(cl,library(data.table))
-  clusterExport(cl,varlist = c('rDist','OTU','pdist','rdist_calc','mindist'))
+  clusterExport(cl,varlist = c('rDist','OTU','pdist','rdist_calc','mindist'), envir= environment())
   
   reps <- rep(ceiling(nreps/ncores),ncores)
   
