@@ -1,8 +1,8 @@
-phylo_z_scores <- function(phy, OTU, ncores, nperm, nfactors, taxonomy) {
+phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
   ##phy = a phylogenetic tree in the form of a phylo object (e.g. imported .nwk file with read.tree of package ape)
   ##OTU = a "species" (e.g. Sequence Variants) by communities table with raw sequence counts or cell counts. Row names and column names necessary for "species" (e.g. SV hashes) and communities, respectively
   ##ncores = the number of desired cores to use for parallelization. Strongly suggested to use at least 20 cores, because the standard deviation of the null distribution depends on that.
-  ##nperm = the number of permutations to use when creating the null distributions for the calculation of the z-scores. A minimum of 100 is recommended.
+  ##nreps = the number of permutations to use when creating the null distributions for the calculation of the z-scores. A minimum of 100 is recommended.
   ##nfactors = the number of phylogenetic factors to search for in phylofactorization. If the p-values become non-significant before reaching this number, the script stops automatically, reporting up to that number of factors
   ##taxonomy = a two column table with "species" names (e.g. SV hashes) in the first column and taxonomic assignments in the second.
   
