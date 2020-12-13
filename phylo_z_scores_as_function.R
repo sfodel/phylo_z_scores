@@ -203,7 +203,7 @@ phylo_z_scores <- function(phy, OTU, ncores, nperm, nfactors, taxonomy) {
   } #I hate myself for using for loops but goddamn them they are very intuitive
   
   pf_sum_score <- twoSampleFactor(sum_score_vec, tree = phy, nfactors = nfactors, ncores = ncores) #The user is prompted to check the distribution of sum_score and standardize, if needed, before running this
-  pf_sum_score_tree <- pf.tree(pf_sum_score, tree= phy_test, layout='rectangular')
+  pf_sum_score_tree <- pf.tree(pf_sum_score, tree= phy, layout='rectangular')
   pp <- pf_sum_score_tree$ggplot
   
   class(pf_sum_score) <- "list"
