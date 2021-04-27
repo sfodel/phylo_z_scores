@@ -7,11 +7,18 @@ phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
   ##taxonomy = a two column table with "species" names (e.g. SV hashes) in the first column and taxonomic assignments in the second.
   
   ###Output is an S4 object that has the following objects collated:
-    ### 1.@species_cluster: A data.table of the individual species scores and taxonomy
-    ### 2.@constant : A data.table containing only species with z-scores < -2
+    ### 1.@species_cluster: A data.table of the individual species phyloscores and taxonomy
+  
+    ### 2.@constant : A data.table containing only species with median phyloscores < -2 
+    ###This is optional to the main analyses and potentialy helpful to identify individual taxa of interest. Please pay extra attention to this feature if you are using phylogenies with poorly supported topologies near the tips.
+    
     ### 3.@taxa.weights : A collapsed data.table of @constant per unique taxonomies
+    
     ### 4.@phylofactorization : The phylofactor object performed on the sum_score of @species_cluster for nfactors
+     
     ### 5.@phylo_tree : The ggtree visualization of the factors of @phylofactorization
+  
+    ###Update as of April 2021 ---Depending on the used R version, sometimes this does not work as a single function. We recommend running the subscripts one by one if this happens###
   
   library(phylofactor)
   library(parallel)
@@ -81,7 +88,7 @@ phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
  
   cl <- makeCluster(ncores)
   clusterEvalQ(cl,library(data.table))
-  clusterExport(cl,varlist=c('pdist','getNTDvecs','NTD_calc','ix'), envir= environment())
+  clusterExport(cl,varlist=c('pdist','getNTDvecs','NTD_calc','ix'), envir= environment()) ###please omit the envir parameter if you are using the command out of the initial wrapper function
   timestamp()
   print("Making initial species table")
   species_NTD_effects <- parLapply(cl,species,getNTDvecs,OTU=OTU,ix=ix)
@@ -144,7 +151,7 @@ phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
   cl <- makeCluster(ncores)
   clusterEvalQ(cl,library(picante))
   clusterEvalQ(cl,library(data.table))
-  clusterExport(cl,varlist = c('rDist','OTU','pdist','rdist_calc','mindist'), envir= environment())
+  clusterExport(cl,varlist = c('rDist','OTU','pdist','rdist_calc','mindist'), envir= environment()) ###please omit the envir parameter if you are using the command out of the initial wrapper function
   
   reps <- rep(ceiling(nreps/ncores),ncores)
   
@@ -185,7 +192,7 @@ phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
   ntd_spp_cluster <- taxonomy[ntd_spp_cluster]
   
   #Subsetting species with median z-scores lower than -2
-  ntd_spp_cluster_constant <- subset(ntd_spp_cluster, subset = ntd_spp_cluster$median_score < -2)
+  ntd_spp_cluster_constant <- subset(ntd_spp_cluster, subset = ntd_spp_cluster$median_score < -2) #optional, see comment at line 13
   
   #Clustering by unique taxonomies
   taxa_weights <- ntd_spp_cluster_constant[,list(sum_score=sum(sum_score), avg_sum_score=mean(sum_score), sum_comm_pairs=sum(N_comm_pairs), avg_comm_pairs=mean(N_comm_pairs)), by='taxonomy']
@@ -200,7 +207,7 @@ phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
       if (phy$tip.label[i] == ntd_spp_cluster$species[j]) 
         sum_score_vec[i] <- ntd_spp_cluster$sum_score[j]
     }
-  } #I hate myself for using for loops but goddamn them they are very intuitive
+  } #I hate myself for using for loops but boy oh boy they are very intuitive
   
   pf_sum_score <- twoSampleFactor(sum_score_vec, tree = phy, nfactors = nfactors, ncores = ncores) #The user is prompted to check the distribution of sum_score and standardize, if needed, before running this
   pf_sum_score_tree <- pf.tree(pf_sum_score, tree= phy, layout='rectangular')
