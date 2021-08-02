@@ -1,4 +1,4 @@
-phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
+###Required Inputs
   ##phy = a phylogenetic tree in the form of a phylo object (e.g. imported .nwk file with read.tree of package ape)
   ##OTU = a "species" (e.g. Sequence Variants) by communities table with raw sequence counts or cell counts. Row names and column names necessary for "species" (e.g. SV hashes) and communities, respectively
   ##ncores = the number of desired cores to use for parallelization. Strongly suggested to use at least 20 cores, because the standard deviation of the null distribution depends on that.
@@ -6,19 +6,18 @@ phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
   ##nfactors = the number of phylogenetic factors to search for in phylofactorization. If the p-values become non-significant before reaching this number, the script stops automatically, reporting up to that number of factors
   ##taxonomy = a two column table with "species" names (e.g. SV hashes) in the first column and taxonomic assignments in the second.
   
-  ###Output is an S4 object that has the following objects collated:
-    ### 1.@species_cluster: A data.table of the individual species phyloscores and taxonomy
+  ###Outputs
+    ### 1.ntd_spp_cluster: A data.table of the individual species phyloscore-related metrics and taxonomy
   
-    ### 2.@constant : A data.table containing only species with median phyloscores < -2 
+    ### 2.ntd_spp_cluster_constant : A data.table containing only species with median phyloscores < -2 
     ###This is optional to the main analyses and potentialy helpful to identify individual taxa of interest. Please pay extra attention to this feature if you are using phylogenies with poorly supported topologies near the tips.
     
-    ### 3.@taxa.weights : A collapsed data.table of @constant per unique taxonomies
+    ### 3.taxa.weights : A collapsed data.table of constant per unique taxonomies
     
-    ### 4.@phylofactorization : The phylofactor object performed on the sum_score of @species_cluster for nfactors
+    ### 4.pf_sum_score : The phylofactor object performed on the $sum_score of ntd_species_cluster for nfactors
      
-    ### 5.@phylo_tree : The ggtree visualization of the factors of @phylofactorization
+    ### 5.pp : The ggtree visualization of the factors of phylofactorization
   
-    ###Update as of April 2021 ---Depending on the used R version, sometimes this does not work as a single function. We recommend running the subscripts one by one if this happens###
   
   library(phylofactor)
   library(parallel)
@@ -88,7 +87,7 @@ phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
  
   cl <- makeCluster(ncores)
   clusterEvalQ(cl,library(data.table))
-  clusterExport(cl,varlist=c('pdist','getNTDvecs','NTD_calc','ix'), envir= environment()) ###please omit the envir parameter if you are using the command out of the initial wrapper function
+  clusterExport(cl,varlist=c('pdist','getNTDvecs','NTD_calc','ix'))
   timestamp()
   print("Making initial species table")
   species_NTD_effects <- parLapply(cl,species,getNTDvecs,OTU=OTU,ix=ix)
@@ -184,7 +183,7 @@ phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
   NTD_data <- NTD_data[rDist]
   NTD_data[,l_z_score:=(log(distances)-null_ldist)/null_sd_ldist]
   
-  ntd_spp_cluster <- NTD_data[,list(avg_score=mean(l_z_score), avg_std_score=mean(l_z_score)*(.N), sum_score=sum(l_z_score), median_score=median(l_z_score), N_comm_pairs = sum(l_z_score)/mean(l_z_score)),
+  ntd_spp_cluster <- NTD_data[,list(avg_score=mean(l_z_score), sd_score=sd(l_z_score), mean_by_sd_score=mean(l_z_score)/sd(l_z_score), sum_score=sum(l_z_score), median_score=median(l_z_score), N_comm_pairs = sum(l_z_score)/mean(l_z_score)),
                                             by='species']
   
   setkey(taxonomy,species)
@@ -198,9 +197,9 @@ phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
   taxa_weights <- ntd_spp_cluster_constant[,list(sum_score=sum(sum_score), avg_sum_score=mean(sum_score), sum_comm_pairs=sum(N_comm_pairs), avg_comm_pairs=mean(N_comm_pairs)), by='taxonomy']
   taxa_weights[,N:=(sum_score/avg_sum_score)]
   
-  # phylofactorization of sum_score ----------------------------------------
+  # phylofactorization of sum_score, please change the input here if you would like, by picking another metric ($) from ntd_spp_cluster, e.g., avg_score, mean_by_sd_score or median score ----------------------------------------
   
-  print("Performing phylofactorization")
+  
   sum_score_vec <- vector(length = Ntip(phy))
   for (i in 1:length(sum_score_vec)) {
     for (j in 1:length(sum_score_vec)) {
@@ -211,11 +210,6 @@ phylo_z_scores <- function(phy, OTU, ncores, nreps, nfactors, taxonomy) {
   
   pf_sum_score <- twoSampleFactor(sum_score_vec, tree = phy, nfactors = nfactors, ncores = ncores) #The user is prompted to check the distribution of sum_score and standardize, if needed, before running this
   pf_sum_score_tree <- pf.tree(pf_sum_score, tree= phy, layout='rectangular')
-  pp <- pf_sum_score_tree$ggplot
+  pp <- pf_sum_score_tree$ggplot #problems here with ggtree package at R versions >4, pending to be solved.
   
-  class(pf_sum_score) <- "list"
-  phylo_z <- setClass("phylo_z", slots=list(species_cluster="data.table", constant="data.table", taxa.weights="data.table", phylofactorization="list", phylo_tree="list"))
-  output <- phylo_z(species_cluster = ntd_spp_cluster, constant = ntd_spp_cluster_constant, phylofactorization = pf_sum_score, taxa.weights = taxa_weights, phylo_tree = pf_sum_score_tree)
-  return(output)
-  
-}
+ 
