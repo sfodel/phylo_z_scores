@@ -30,10 +30,20 @@
   species <- rownames(OTU)
   phydist <- cophenetic(phy)
   pdist <- phydist[species,species]
+  #Optional fixing of the pdist object in cases where the tree has 0-length branches. We replace the 0s in pdist with the minimum phylogenetic distance across all the tree.
+               #pdist[which(pdist==0)] <- NA
+               #pdist[which(is.na(pdist))] <- head(sort(pdist))[1]
   rm(phydist)
   taxonomy <- as.data.table(taxonomy)
   names(taxonomy) <- c("species", "taxonomy")
   
+  #Setting rows (species) without any absences to have one absence in the sample (column) where they have the lowest abundance. This allows the inclusion of all species in the analyses
+  for (i in 1:nrow(OTU)) {
+  if (min(OTU[i,]>0)) {
+    OTU[i, which(OTU[i,]==min(OTU[i,]))] <- 0
+    }
+  }          
+               
   ##Make data.table ix with rows like the upper diagonal of your (community*community) matrix
   timestamp()
   print("Making initial community-community data.table")
