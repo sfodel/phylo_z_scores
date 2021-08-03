@@ -219,7 +219,7 @@
   } #I hate myself for using for loops but boy oh boy they are very intuitive
   
   pf_sum_score <- twoSampleFactor(sum_score_vec, tree = phy, nfactors = nfactors, ncores = ncores) #The user is prompted to check the distribution of sum_score and standardize, if needed, before running this
-  pf_sum_score_tree <- pf.tree(pf_sum_score, tree= phy, layout='rectangular')
+  pf_sum_score_tree <- pf.tree(pf_sum_score, tree= phy, layout='rectangular') #problems here with ggtree package at R versions >4, pending to be solved.
   pp <- pf_sum_score_tree$ggplot #problems here with ggtree package at R versions >4, pending to be solved.
   
  
