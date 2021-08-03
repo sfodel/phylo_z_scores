@@ -1,8 +1,8 @@
 # phylo_z_scores
 Null modelling of phylogenetic nearest taxon distances for individual taxa
 
-This repository contains the R code to identify phylogenetic clades under homogeneous ecological selection (HoS clades), that is monophyletic clades of
-taxa (e.g. Sequence Variants in a 16S rRNA gene survey) with phylogenetically closer relatives across communities than expected by chance.
+This repository contains the R code to identify phylogenetic clades under homogeneous ecological selection (HoS clades) or heterogeneous ecological selection (HeS clades), that is monophyletic clades of
+taxa (e.g. Sequence Variants in a 16S rRNA gene survey) with phylogenetically closer (for HoS), or more distant (for HeS), relatives across communities than expected by chance.
 The method consists of the following steps: 
 
 1) For a given pair of communities, j, k, and for each SV, i, that is present in one but not both communities, we calculate its “phyloscore”. The phyloscore is a z-score quantifying how different its nearest phylogenetic distance is to a null expectation in which species are randomly drawn to be present in the community in which SV i is absent. For example, if we examine SV i across communities j and k and i is present in community j and not in community k, we first find the nearest phylogenetic distance di,j,k of i based on the SVs that are present in community k. We then sample a null distribution of M minimum phylogenetic distances {d_(i,j,k,m)^0 }_(m=1)^(m=M) between our focal SV i and the SVs present in community k in which SV i is absent. If there are Nk species present in community k, we randomly sample Nk species other than SV i to be present in the null community, compute the distance to the nearest present taxon to our focal SV, and repeat this process M=100 times to estimate the distribution of nearest phylogenetic distances in our null model. Finally, we calculate the phyloscore as:
